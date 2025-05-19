@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Hostel {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+  rooms Room[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole
+  hostelId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hostel Hostel @relation(fields: [hostelId], references: [id])
+}
+
+enum UserRole {
+  SUPERADMIN
+  ADMIN
+  OPERATOR
+}
+
+model Room {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String
+  capacity  Int
+  hostelId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hostel       Hostel        @relation(fields: [hostelId], references: [id])
+  dayPrices    DayPrice[]
+  reservations Reservation[]
+
+  @@unique([slug, hostelId], name: "Room_slug_hostelId_key")
+}
+
+model DayPrice {
+  id        String   @id @default(uuid())
+  date      DateTime
+  price     Int
+  roomId    String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([date, roomId])
+}
+
+model Reservation {
+  id            String   @id @default(uuid())
+  startDate     DateTime
+  endDate       DateTime
+  guests        Int
+  room          Room     @relation(fields: [roomId], references: [id])
+  roomId        String
+  name          String?
+  email         String?
+  cancelled     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now())
+  amountPaid    Int      @default(0)
+  totalPrice    Int      @default(0) // 👈 AGREGAMOS ESTA LINEA
+  paymentStatus PaymentStatus @default(pending)
+  payments      ReservationPayment[]
+  guestId       String?  
+  guest         Guest?    @relation(fields: [guestId], references: [id])
+}
+
+
+enum PaymentStatus {
+  pending
+  partial
+  paid
+}
+
+model ReservationPayment {
+  id            String   @id @default(uuid())
+  reservationId String
+  amount        Int
+  createdAt     DateTime @default(now())
+
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+}
+
+model Guest {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reservations Reservation[]
+}
