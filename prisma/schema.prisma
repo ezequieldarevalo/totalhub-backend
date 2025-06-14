@@ -14,8 +14,9 @@ model Hostel {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users User[]
-  rooms Room[]
+  users              User[]
+  rooms              Room[]
+  channelConnections ChannelConnection[]
 }
 
 model User {
@@ -46,6 +47,8 @@ model Room {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  externalRoomId String?
+
   hostel       Hostel        @relation(fields: [hostelId], references: [id])
   dayPrices    DayPrice[]
   reservations Reservation[]
@@ -68,25 +71,24 @@ model DayPrice {
 }
 
 model Reservation {
-  id            String   @id @default(uuid())
+  id            String               @id @default(uuid())
   startDate     DateTime
   endDate       DateTime
   guests        Int
-  room          Room     @relation(fields: [roomId], references: [id])
+  room          Room                 @relation(fields: [roomId], references: [id])
   roomId        String
   name          String?
   email         String?
-  cancelled     Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @default(now())
-  amountPaid    Int      @default(0)
-  totalPrice    Int      @default(0) // 👈 AGREGAMOS ESTA LINEA
-  paymentStatus PaymentStatus @default(pending)
+  cancelled     Boolean              @default(false)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @default(now())
+  amountPaid    Int                  @default(0)
+  totalPrice    Int                  @default(0)
+  paymentStatus PaymentStatus        @default(pending)
   payments      ReservationPayment[]
-  guestId       String?  
-  guest         Guest?    @relation(fields: [guestId], references: [id])
+  guestId       String?
+  guest         Guest?               @relation(fields: [guestId], references: [id])
 }
-
 
 enum PaymentStatus {
   pending
@@ -112,4 +114,43 @@ model Guest {
   updatedAt DateTime @updatedAt
 
   reservations Reservation[]
+}
+
+model Channel {
+  id        String   @id @default(cuid())
+  name      String
+  code      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  connections ChannelConnection[]
+}
+
+model ChannelConnection {
+  id          String   @id @default(cuid())
+  hostelId    String
+  channelId   String
+  enabled     Boolean  @default(true)
+  externalId  String?
+  credentials Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  hostel             Hostel                   @relation(fields: [hostelId], references: [id])
+  channel            Channel                  @relation(fields: [channelId], references: [id])
+  reservationsSynced ChannelReservationSync[]
+
+  @@unique([hostelId, channelId])
+}
+
+model ChannelReservationSync {
+  id            String   @id @default(cuid())
+  connectionId  String
+  externalResId String
+  status        String
+  rawData       Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  connection ChannelConnection @relation(fields: [connectionId], references: [id])
 }

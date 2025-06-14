@@ -14,6 +14,11 @@ import { GuestModule } from './guest/guest.module';
 import { PaymentsModule } from './payments/payments.module';
 import { OperatorModule } from './operator/operator.module';
 import { HostelsModule } from './hostels/hostels.module';
+import { AdminUsersModule } from './admin-users/admin-users.module';
+import { ChannelModule } from './channel/channel.module';
+import { ChannelConnectionModule } from './channel-connection/channel-connection.module';
+import { ChannelReservationSyncModule } from './channel-reservation-sync/channel-reservation-sync.module';
+import { ExternalModule } from './external/external.module';
 
 @Module({
   imports: [
@@ -29,6 +34,11 @@ import { HostelsModule } from './hostels/hostels.module';
     PaymentsModule,
     OperatorModule,
     HostelsModule,
+    AdminUsersModule,
+    ChannelModule,
+    ChannelConnectionModule,
+    ChannelReservationSyncModule,
+    ExternalModule,
   ],
   controllers: [AppController, UsersController],
   providers: [AppService, UsersService],
