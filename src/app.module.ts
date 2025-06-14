@@ -19,6 +19,7 @@ import { ChannelModule } from './channel/channel.module';
 import { ChannelConnectionModule } from './channel-connection/channel-connection.module';
 import { ChannelReservationSyncModule } from './channel-reservation-sync/channel-reservation-sync.module';
 import { ExternalModule } from './external/external.module';
+import { ChannelSyncModule } from './channel-sync/channel-sync.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { ExternalModule } from './external/external.module';
     ChannelConnectionModule,
     ChannelReservationSyncModule,
     ExternalModule,
+    ChannelSyncModule,
   ],
   controllers: [AppController, UsersController],
   providers: [AppService, UsersService],
