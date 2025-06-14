@@ -158,4 +158,11 @@ export class ExternalService {
       data: { externalRoomId },
     });
   }
+
+  async getConnectionById(connectionId: string) {
+    return this.prisma.channelConnection.findUnique({
+      where: { id: connectionId },
+      select: { hostelId: true },
+    });
+  }
 }

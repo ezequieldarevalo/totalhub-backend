@@ -28,15 +28,21 @@ export class ExternalController {
 
   @Get('availability')
   async getAvailability(
-    @Query('hostelId') hostelId: string,
+    @Query('connectionId') connectionId: string,
     @Query('from') from: string,
     @Query('to') to: string,
   ) {
-    if (!hostelId || !from || !to) {
+    if (!connectionId || !from || !to) {
       throw new BadRequestException('Missing required query params');
     }
 
-    return this.externalService.getAvailability(hostelId, from, to);
+    const connection =
+      await this.externalService.getConnectionById(connectionId);
+    if (!connection) {
+      throw new BadRequestException('Invalid connectionId');
+    }
+
+    return this.externalService.getAvailability(connection.hostelId, from, to);
   }
 
   @Get('prices')
