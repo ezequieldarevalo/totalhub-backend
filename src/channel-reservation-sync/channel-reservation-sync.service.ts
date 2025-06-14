@@ -34,17 +34,9 @@ export class ChannelReservationSyncService {
   }
 
   async findByExternalId(externalResId: string) {
-    const reservation = await this.prisma.channelReservationSync.findFirst({
+    return await this.prisma.channelReservationSync.findFirst({
       where: { externalResId },
     });
-
-    if (!reservation) {
-      throw new NotFoundException(
-        `External reservation '${externalResId}' not found`,
-      );
-    }
-
-    return reservation;
   }
 
   async createReservationFromSync(id: string) {

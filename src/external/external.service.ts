@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ChannelReservationSyncService } from 'src/channel-reservation-sync/channel-reservation-sync.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { BookingReservationDto } from './dto/booking-reservation.dto';
@@ -13,7 +13,14 @@ export class ExternalService {
   async processBookingReservation(payload: BookingReservationDto) {
     const { externalResId, connectionId, status, rawData } = payload;
 
-    const existing = await this.syncService.findByExternalId(externalResId);
+    let existing: { id: string } | null = null;
+
+    try {
+      existing = await this.syncService.findByExternalId(externalResId);
+    } catch (err: any) {
+      if (!(err instanceof NotFoundException)) throw err;
+    }
+
     if (existing) {
       return { message: 'Reservation already synced', id: existing.id };
     }
