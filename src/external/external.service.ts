@@ -13,33 +13,38 @@ export class ExternalService {
   async processBookingReservation(payload: BookingReservationDto) {
     const { externalResId, connectionId, status, rawData } = payload;
 
-    const existing = await this.prisma.channelReservationSync.findFirst({
-      where: { externalResId },
-    });
+    try {
+      const existing = await this.prisma.channelReservationSync.findFirst({
+        where: { externalResId },
+      });
 
-    if (existing) {
-      return { message: 'Reservation already synced', id: existing.id };
+      if (existing) {
+        return { message: 'Reservation already synced', id: existing.id };
+      }
+
+      await this.syncService.create({
+        connectionId,
+        externalResId,
+        status,
+        rawData,
+      });
+
+      const reservation = await this.prisma.reservation.create({
+        data: {
+          startDate: new Date(rawData.startDate),
+          endDate: new Date(rawData.endDate),
+          guests: rawData.guests,
+          roomId: rawData.roomId,
+          name: rawData.name,
+          email: rawData.email,
+        },
+      });
+
+      return { message: 'Reservation created', reservationId: reservation.id };
+    } catch (err) {
+      console.error('💥 Error en processBookingReservation:', err);
+      throw err;
     }
-
-    await this.syncService.create({
-      connectionId,
-      externalResId,
-      status,
-      rawData,
-    });
-
-    const reservation = await this.prisma.reservation.create({
-      data: {
-        startDate: new Date(rawData.startDate),
-        endDate: new Date(rawData.endDate),
-        guests: rawData.guests,
-        roomId: rawData.roomId,
-        name: rawData.name,
-        email: rawData.email,
-      },
-    });
-
-    return { message: 'Reservation created', reservationId: reservation.id };
   }
 
   async getSyncedReservations(hostelId?: string, externalResId?: string) {
