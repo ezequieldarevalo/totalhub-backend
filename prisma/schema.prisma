@@ -152,5 +152,7 @@ model ChannelReservationSync {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  connection ChannelConnection @relation(fields: [connectionId], references: [id])
+  connection    ChannelConnection @relation(fields: [connectionId], references: [id])
+  reservationId String?           // 👈 NUEVO
+  reservation   Reservation?      @relation(fields: [reservationId], references: [id]) // 👈 NUEVO
 }
