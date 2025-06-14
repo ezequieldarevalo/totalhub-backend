@@ -88,6 +88,8 @@ model Reservation {
   payments      ReservationPayment[]
   guestId       String?
   guest         Guest?               @relation(fields: [guestId], references: [id])
+
+  channelReservationSyncs ChannelReservationSync[] // 👈 NUEVO
 }
 
 enum PaymentStatus {
