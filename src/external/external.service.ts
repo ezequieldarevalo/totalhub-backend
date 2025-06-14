@@ -13,15 +13,17 @@ export class ExternalService {
   async processBookingReservation(payload: BookingReservationDto) {
     const { externalResId, connectionId, status, rawData } = payload;
 
-    let existing: { id: string } | null = null;
-
+    let existing: any = null;
     try {
       existing = await this.syncService.findByExternalId(externalResId);
-    } catch (err: any) {
-      if (!(err instanceof NotFoundException)) throw err;
+    } catch (err) {
+      if (!(err instanceof NotFoundException)) {
+        throw err;
+      }
     }
 
     if (existing) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       return { message: 'Reservation already synced', id: existing.id };
     }
 
