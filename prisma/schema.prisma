@@ -151,10 +151,10 @@ model ChannelReservationSync {
   externalResId String
   status        String
   rawData       Json
+  reservationId String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  connection    ChannelConnection @relation(fields: [connectionId], references: [id])
-  reservationId String?           // 👈 NUEVO
-  reservation   Reservation?      @relation(fields: [reservationId], references: [id]) // 👈 NUEVO
+  connection  ChannelConnection @relation(fields: [connectionId], references: [id])
+  reservation Reservation?      @relation(fields: [reservationId], references: [id]) // 👈 NUEVO
 }

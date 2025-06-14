@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch } from '@nestjs/common';
 import { ChannelReservationSyncService } from './channel-reservation-sync.service';
 import { CreateChannelReservationSyncDto } from './dto/create-channel-reservation-sync.dto';
 
@@ -19,5 +19,10 @@ export class ChannelReservationSyncController {
   @Get('by-external/:externalResId')
   findByExternalId(@Param('externalResId') externalResId: string) {
     return this.service.findByExternalId(externalResId);
+  }
+
+  @Patch(':id/sync')
+  async createReservation(@Param('id') id: string) {
+    return await this.service.createReservationFromSync(id);
   }
 }
