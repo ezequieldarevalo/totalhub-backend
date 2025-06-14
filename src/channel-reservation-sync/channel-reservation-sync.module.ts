@@ -4,6 +4,7 @@ import { ChannelReservationSyncController } from './channel-reservation-sync.con
 
 @Module({
   providers: [ChannelReservationSyncService],
-  controllers: [ChannelReservationSyncController]
+  controllers: [ChannelReservationSyncController],
+  exports: [ChannelReservationSyncService],
 })
 export class ChannelReservationSyncModule {}
