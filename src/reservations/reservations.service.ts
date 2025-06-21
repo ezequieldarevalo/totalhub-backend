@@ -13,6 +13,7 @@ import {
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { Prisma } from '@prisma/client';
 import { ReservationResponseDto } from './dto/reservation-response.dto';
+import { RawBookingData } from 'src/channel-sync/channel-sync.service';
 
 @Injectable()
 export class ReservationsService {
@@ -609,9 +610,34 @@ export class ReservationsService {
     const reservation = await this.prisma.reservation.findUnique({
       where: { id },
       include: {
-        room: { select: { id: true, name: true, hostelId: true } },
-        guest: { select: { id: true, name: true, email: true } },
-        payments: { select: { amount: true } },
+        room: {
+          select: {
+            id: true,
+            name: true,
+            hostelId: true,
+          },
+        },
+        guest: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        payments: {
+          select: {
+            amount: true,
+          },
+        },
+        channelReservationSyncs: {
+          include: {
+            connection: {
+              include: {
+                channel: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -838,5 +864,69 @@ export class ReservationsService {
       where: { reservationId: id },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async createReservationFromSync({ rawData }: { rawData: RawBookingData }) {
+    const { roomId, startDate, endDate, guests, name, email } = rawData;
+
+    if (!roomId || !startDate || !endDate || !guests) {
+      throw new BadRequestException('Missing required fields in rawData');
+    }
+
+    const room = await this.prisma.room.findUnique({
+      where: { id: roomId },
+    });
+
+    if (!room) {
+      throw new BadRequestException('Room not found');
+    }
+
+    const from = parseISO(startDate);
+    const to = parseISO(endDate);
+
+    const days = eachDayOfInterval({
+      start: from,
+      end: addDays(to, -1),
+    });
+
+    const prices = await this.prisma.dayPrice.findMany({
+      where: {
+        roomId,
+        date: { gte: from, lt: to },
+      },
+    });
+
+    if (prices.length !== days.length) {
+      throw new BadRequestException('Missing prices for some days');
+    }
+
+    const total = prices.reduce((sum, p) => sum + p.price * guests, 0);
+
+    let guestId: string | null = null;
+    if (email) {
+      let guest = await this.prisma.guest.findUnique({ where: { email } });
+      if (!guest && name) {
+        guest = await this.prisma.guest.create({ data: { name, email } });
+      }
+      guestId = guest?.id ?? null;
+    }
+
+    const reservation = await this.prisma.reservation.create({
+      data: {
+        roomId,
+        startDate: from,
+        endDate: to,
+        guests,
+        name: name || null,
+        email: email || null,
+        guestId,
+        totalPrice: total,
+        cancelled: false,
+        paymentStatus: 'pending',
+        amountPaid: 0,
+      },
+    });
+
+    return { id: reservation.id };
   }
 }
