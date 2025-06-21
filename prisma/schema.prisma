@@ -34,7 +34,6 @@ enum UserRole {
   SUPERADMIN
   ADMIN
   OPERATOR
->>>>>>> eb44913e612bc23bd86fe5e06f27fde91e5cdf86
 }
 
 model Room {
