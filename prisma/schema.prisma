@@ -8,15 +8,14 @@ datasource db {
 }
 
 model Hostel {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  users              User[]
-  rooms              Room[]
+  id                 String              @id @default(uuid())
+  name               String
+  slug               String              @unique
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
   channelConnections ChannelConnection[]
+  rooms              Room[]
+  users              User[]
 }
 
 model User {
@@ -28,30 +27,21 @@ model User {
   hostelId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  hostel Hostel @relation(fields: [hostelId], references: [id])
-}
-
-enum UserRole {
-  SUPERADMIN
-  ADMIN
-  OPERATOR
+  hostel    Hostel   @relation(fields: [hostelId], references: [id])
 }
 
 model Room {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String
-  capacity  Int
-  hostelId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id             String        @id @default(uuid())
+  name           String
+  slug           String
+  capacity       Int
+  hostelId       String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   externalRoomId String?
-
-  hostel       Hostel        @relation(fields: [hostelId], references: [id])
-  dayPrices    DayPrice[]
-  reservations Reservation[]
+  dayPrices      DayPrice[]
+  reservations   Reservation[]
+  hostel         Hostel        @relation(fields: [hostelId], references: [id])
 
   @@unique([slug, hostelId], name: "Room_slug_hostelId_key")
 }
@@ -64,97 +54,96 @@ model DayPrice {
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
   @@unique([date, roomId])
 }
 
 model Reservation {
-  id            String               @id @default(uuid())
-  startDate     DateTime
-  endDate       DateTime
-  guests        Int
-  room          Room                 @relation(fields: [roomId], references: [id])
-  roomId        String
-  name          String?
-  email         String?
-  cancelled     Boolean              @default(false)
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @default(now())
-  amountPaid    Int                  @default(0)
-  totalPrice    Int                  @default(0)
-  paymentStatus PaymentStatus        @default(pending)
-  payments      ReservationPayment[]
-  guestId       String?
-  guest         Guest?               @relation(fields: [guestId], references: [id])
-
-  channelReservationSyncs ChannelReservationSync[] // 👈 NUEVO
-}
-
-enum PaymentStatus {
-  pending
-  partial
-  paid
+  id                      String                   @id @default(uuid())
+  startDate               DateTime
+  endDate                 DateTime
+  guests                  Int
+  roomId                  String
+  name                    String?
+  email                   String?
+  cancelled               Boolean                  @default(false)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @default(now())
+  amountPaid              Int                      @default(0)
+  totalPrice              Int                      @default(0)
+  paymentStatus           PaymentStatus            @default(pending)
+  guestId                 String?
+  channelReservationSyncs ChannelReservationSync[]
+  guest                   Guest?                   @relation(fields: [guestId], references: [id])
+  room                    Room                     @relation(fields: [roomId], references: [id])
+  payments                ReservationPayment[]
 }
 
 model ReservationPayment {
-  id            String   @id @default(uuid())
+  id            String      @id @default(uuid())
   reservationId String
   amount        Int
-  createdAt     DateTime @default(now())
-
-  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
 }
 
 model Guest {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  phone     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  phone        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   reservations Reservation[]
 }
 
 model Channel {
-  id        String   @id @default(cuid())
-  name      String
-  code      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id          String              @id @default(cuid())
+  name        String
+  code        String              @unique
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
   connections ChannelConnection[]
 }
 
 model ChannelConnection {
-  id          String   @id @default(cuid())
-  hostelId    String
-  channelId   String
-  enabled     Boolean  @default(true)
-  externalId  String?
-  credentials Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  hostel             Hostel                   @relation(fields: [hostelId], references: [id])
+  id                 String                   @id @default(cuid())
+  hostelId           String
+  channelId          String
+  enabled            Boolean                  @default(true)
+  externalId         String?
+  credentials        Json?
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
   channel            Channel                  @relation(fields: [channelId], references: [id])
+  hostel             Hostel                   @relation(fields: [hostelId], references: [id])
   reservationsSynced ChannelReservationSync[]
 
   @@unique([hostelId, channelId])
 }
 
 model ChannelReservationSync {
-  id            String   @id @default(cuid())
+  id            String            @id @default(cuid())
   connectionId  String
   externalResId String
   status        String
   rawData       Json
   reservationId String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  connection    ChannelConnection @relation(fields: [connectionId], references: [id])
+  reservation   Reservation?      @relation(fields: [reservationId], references: [id])
+}
 
-  connection  ChannelConnection @relation(fields: [connectionId], references: [id])
-  reservation Reservation?      @relation(fields: [reservationId], references: [id]) // 👈 NUEVO
+enum UserRole {
+  SUPERADMIN
+  ADMIN
+  OPERATOR
+}
+
+enum PaymentStatus {
+  pending
+  partial
+  paid
 }
