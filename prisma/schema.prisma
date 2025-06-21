@@ -142,12 +142,6 @@ model ChannelReservationSync {
   reservation   Reservation?      @relation(fields: [reservationId], references: [id])
 }
 
-enum UserRole {
-  SUPERADMIN
-  ADMIN
-  OPERATOR
-}
-
 enum PaymentStatus {
   pending
   partial
