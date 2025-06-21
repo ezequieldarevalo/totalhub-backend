@@ -24,10 +24,17 @@ model User {
   password  String
   name      String
   role      UserRole
-  hostelId  String
+  hostelId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  hostel    Hostel   @relation(fields: [hostelId], references: [id])
+  hostel Hostel? @relation(fields: [hostelId], references: [id])
+}
+
+enum UserRole {
+  SUPERADMIN
+  ADMIN
+  OPERATOR
+>>>>>>> eb44913e612bc23bd86fe5e06f27fde91e5cdf86
 }
 
 model Room {
