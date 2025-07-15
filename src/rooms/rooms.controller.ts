@@ -41,6 +41,13 @@ export class RoomsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @Get(':id')
+  getRoomById(@Param('id') id: string, @Req() req: { user: JwtPayload }) {
+    return this.roomsService.getRoomById(id, req.user);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Patch(':id')
   update(
     @Param('id') id: string,

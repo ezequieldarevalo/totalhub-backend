@@ -1,6 +1,9 @@
-import { IsDateString, IsInt, IsUUID, Min } from 'class-validator';
+import { IsDateString, IsInt, IsOptional, IsUUID, Min } from 'class-validator';
 
 export class CreateDayPriceDto {
+  @IsUUID()
+  roomId: string;
+
   @IsDateString()
   date: string;
 
@@ -8,6 +11,8 @@ export class CreateDayPriceDto {
   @Min(0)
   price: number;
 
-  @IsUUID()
-  roomId: string;
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  availableCapacity?: number;
 }

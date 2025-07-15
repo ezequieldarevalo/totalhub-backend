@@ -24,7 +24,7 @@ export class CreateReservationDto {
 
   @IsOptional()
   @IsString()
-  name?: string;
+  name: string;
 
   @IsOptional()
   @IsEmail()

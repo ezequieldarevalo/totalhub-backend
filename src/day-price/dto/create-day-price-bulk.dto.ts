@@ -1,15 +1,26 @@
-// src/day-price/dto/create-day-price-bulk.dto.ts
-import { IsArray, IsUUID, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { IsDateString, IsNumber, Min } from 'class-validator';
+import {
+  IsArray,
+  IsDateString,
+  IsInt,
+  IsOptional,
+  IsUUID,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 
-class PricePerDayDto {
+class SingleDayPriceDto {
   @IsDateString()
   date: string;
 
-  @IsNumber()
+  @IsInt()
   @Min(0)
   price: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  availableCapacity?: number;
 }
 
 export class CreateDayPriceBulkDto {
@@ -18,6 +29,6 @@ export class CreateDayPriceBulkDto {
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => PricePerDayDto)
-  prices: PricePerDayDto[];
+  @Type(() => SingleDayPriceDto)
+  prices: SingleDayPriceDto[];
 }

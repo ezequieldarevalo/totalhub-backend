@@ -76,7 +76,11 @@ export class GuestService {
             room: {
               select: {
                 id: true,
-                name: true,
+                roomType: {
+                  select: {
+                    name: true,
+                  },
+                },
               },
             },
           },

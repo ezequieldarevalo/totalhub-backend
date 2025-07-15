@@ -75,11 +75,13 @@ export class AuthService {
         name: user.name,
         email: user.email,
         role: user.role,
-        hostel: {
-          id: user.hostel.id,
-          name: user.hostel.name,
-          slug: user.hostel.slug,
-        },
+        hostel: user.hostel
+          ? {
+              id: user.hostel.id,
+              name: user.hostel.name,
+              slug: user.hostel.slug,
+            }
+          : null,
       },
     };
   }

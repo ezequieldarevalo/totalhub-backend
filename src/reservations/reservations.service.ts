@@ -29,6 +29,9 @@ export class ReservationsService {
         id: dto.roomId,
         hostelId: user.hostelId,
       },
+      include: {
+        roomType: true,
+      },
     });
 
     if (!room) {
@@ -77,7 +80,9 @@ export class ReservationsService {
         0,
       );
 
-      if (totalGuests + dto.guests > room.capacity) {
+      const maxCapacity = room.roomType?.capacity ?? 0;
+
+      if (totalGuests + dto.guests > maxCapacity) {
         throw new BadRequestException(
           `No availability for date ${day.toISOString().split('T')[0]}`,
         );
@@ -168,6 +173,21 @@ export class ReservationsService {
       throw new BadRequestException('Not authorized to view reservations');
     }
 
+    if (roomId) {
+      const room = await this.prisma.room.findFirst({
+        where: {
+          id: roomId,
+          hostelId: user.hostelId,
+        },
+      });
+
+      if (!room) {
+        throw new BadRequestException(
+          'Room not found or not part of your hostel',
+        );
+      }
+    }
+
     const filters: Prisma.ReservationWhereInput = {
       room: { hostelId: user.hostelId },
       cancelled: false,
@@ -178,9 +198,11 @@ export class ReservationsService {
     if (from && to) {
       const fromDate = parseISO(from);
       const toDate = parseISO(to);
+
       if (!isValid(fromDate) || !isValid(toDate)) {
         throw new BadRequestException('Invalid date range');
       }
+
       filters.OR = [
         { startDate: { gte: fromDate, lt: toDate } },
         { endDate: { gt: fromDate, lte: toDate } },
@@ -199,13 +221,37 @@ export class ReservationsService {
         email: true,
         totalPrice: true,
         paymentStatus: true,
-        room: { select: { id: true, name: true } },
         payments: { select: { amount: true } },
+        room: {
+          select: {
+            id: true,
+            roomType: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        guest: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
       orderBy: { startDate: 'asc' },
     });
 
-    return reservations.map((r) => ReservationResponseDto.fromEntity(r));
+    return reservations.map((r) =>
+      ReservationResponseDto.fromEntity({
+        ...r,
+        room: {
+          id: r.room.id,
+          name: r.room.roomType?.name ?? '—',
+        },
+      }),
+    );
   }
 
   async deleteReservation(id: string, user: JwtPayload) {
@@ -268,11 +314,24 @@ export class ReservationsService {
         email: dto.email ?? null,
         guestId,
       },
-      include: {
+      select: {
+        id: true,
+        startDate: true,
+        endDate: true,
+        guests: true,
+        cancelled: true,
+        name: true,
+        email: true,
+        totalPrice: true,
+        paymentStatus: true,
         room: {
           select: {
             id: true,
-            name: true,
+            roomType: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
         payments: {
@@ -290,7 +349,13 @@ export class ReservationsService {
       },
     });
 
-    return ReservationResponseDto.fromEntity(updated);
+    return ReservationResponseDto.fromEntity({
+      ...updated,
+      room: {
+        id: updated.room.id,
+        name: updated.room.roomType?.name ?? '—',
+      },
+    });
   }
 
   async getCalendar(
@@ -301,6 +366,14 @@ export class ReservationsService {
   ) {
     const room = await this.prisma.room.findFirst({
       where: { id: roomId, hostelId: user.hostelId },
+      select: {
+        id: true,
+        roomType: {
+          select: {
+            capacity: true,
+          },
+        },
+      },
     });
 
     if (!room) {
@@ -328,6 +401,8 @@ export class ReservationsService {
       },
     });
 
+    const capacity = room.roomType?.capacity ?? 0;
+
     const calendar = days.map((day) => {
       const guestsThatDay = reservations
         .filter((r) => r.startDate <= day && r.endDate > day)
@@ -336,8 +411,8 @@ export class ReservationsService {
       return {
         date: day.toISOString().split('T')[0],
         guests: guestsThatDay,
-        available: guestsThatDay < room.capacity,
-        capacity: room.capacity,
+        available: guestsThatDay < capacity,
+        capacity,
       };
     });
 
@@ -381,7 +456,11 @@ export class ReservationsService {
         room: {
           select: {
             id: true,
-            name: true,
+            roomType: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
         payments: {
@@ -400,7 +479,15 @@ export class ReservationsService {
       orderBy: { startDate: 'desc' },
     });
 
-    return reservations.map((r) => ReservationResponseDto.fromEntity(r));
+    return reservations.map((r) =>
+      ReservationResponseDto.fromEntity({
+        ...r,
+        room: {
+          id: r.room.id,
+          name: r.room.roomType?.name ?? '—',
+        },
+      }),
+    );
   }
 
   async getUpcomingReservations(
@@ -441,7 +528,11 @@ export class ReservationsService {
         room: {
           select: {
             id: true,
-            name: true,
+            roomType: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
         payments: {
@@ -460,12 +551,24 @@ export class ReservationsService {
       orderBy: { startDate: 'desc' },
     });
 
-    return reservations.map((r) => ReservationResponseDto.fromEntity(r));
+    return reservations.map((r) =>
+      ReservationResponseDto.fromEntity({
+        ...r,
+        room: {
+          id: r.room.id,
+          name: r.room.roomType?.name ?? '—',
+        },
+      }),
+    );
   }
 
   async getHostelCalendar(from: string, to: string, user: JwtPayload) {
     const fromDate = parseISO(from);
     const toDate = parseISO(to);
+
+    if (!isValid(fromDate) || !isValid(toDate)) {
+      throw new BadRequestException('Invalid date range');
+    }
 
     const days = eachDayOfInterval({
       start: fromDate,
@@ -474,7 +577,12 @@ export class ReservationsService {
 
     const rooms = await this.prisma.room.findMany({
       where: { hostelId: user.hostelId },
-      select: { id: true, name: true, capacity: true },
+      select: {
+        id: true,
+        roomType: {
+          select: { name: true, capacity: true },
+        },
+      },
     });
 
     const reservations = await this.prisma.reservation.findMany({
@@ -488,8 +596,8 @@ export class ReservationsService {
 
     return rooms.map((room) => ({
       id: room.id,
-      name: room.name,
-      capacity: room.capacity,
+      name: room.roomType?.name,
+      capacity: room.roomType?.capacity,
       availability: days.map((day) => {
         const guests = reservations
           .filter(
@@ -498,7 +606,10 @@ export class ReservationsService {
           )
           .reduce((sum, r) => sum + r.guests, 0);
 
-        return { date: day.toISOString().split('T')[0], guests };
+        return {
+          date: day.toISOString().split('T')[0],
+          guests,
+        };
       }),
     }));
   }
@@ -613,8 +724,10 @@ export class ReservationsService {
         room: {
           select: {
             id: true,
-            name: true,
             hostelId: true,
+            roomType: {
+              select: { name: true },
+            },
           },
         },
         guest: {
@@ -645,7 +758,16 @@ export class ReservationsService {
       throw new BadRequestException('Reservation not found or access denied');
     }
 
-    return ReservationResponseDto.fromEntity(reservation);
+    // Adaptar room para que coincida con lo que espera el DTO
+    const adaptedReservation = {
+      ...reservation,
+      room: {
+        id: reservation.room.id,
+        name: reservation.room.roomType?.name ?? '—',
+      },
+    };
+
+    return ReservationResponseDto.fromEntity(adaptedReservation);
   }
 
   async cancelReservation(id: string, user: JwtPayload) {
@@ -706,7 +828,9 @@ export class ReservationsService {
         room: {
           select: {
             id: true,
-            name: true,
+            roomType: {
+              select: { name: true },
+            },
           },
         },
         payments: {
@@ -714,11 +838,26 @@ export class ReservationsService {
             amount: true,
           },
         },
+        guest: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
       orderBy: { startDate: 'desc' },
     });
 
-    return reservations.map((r) => ReservationResponseDto.fromEntity(r));
+    return reservations.map((r) =>
+      ReservationResponseDto.fromEntity({
+        ...r,
+        room: {
+          id: r.room.id,
+          name: r.room.roomType?.name ?? '—',
+        },
+      }),
+    );
   }
 
   async getIncomeReport(from: string, to: string, user: JwtPayload) {

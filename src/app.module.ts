@@ -20,6 +20,8 @@ import { ChannelConnectionModule } from './channel-connection/channel-connection
 import { ChannelReservationSyncModule } from './channel-reservation-sync/channel-reservation-sync.module';
 import { ExternalModule } from './external/external.module';
 import { ChannelSyncModule } from './channel-sync/channel-sync.module';
+import { RoomTypesModule } from './room-types/room-types.module';
+import { RoomFeaturesModule } from './room-features/room-features.module';
 
 @Module({
   imports: [
@@ -41,6 +43,8 @@ import { ChannelSyncModule } from './channel-sync/channel-sync.module';
     ChannelReservationSyncModule,
     ExternalModule,
     ChannelSyncModule,
+    RoomTypesModule,
+    RoomFeaturesModule,
   ],
   controllers: [AppController, UsersController],
   providers: [AppService, UsersService],

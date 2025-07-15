@@ -38,18 +38,46 @@ enum UserRole {
 
 model Room {
   id             String        @id @default(uuid())
-  name           String
-  slug           String
-  capacity       Int
+  description    String?       // 🆕 descripción opcional
   hostelId       String
+  roomTypeId     String?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   externalRoomId String?
   dayPrices      DayPrice[]
   reservations   Reservation[]
+  images         RoomImage[]   // 🆕 relación con imágenes
   hostel         Hostel        @relation(fields: [hostelId], references: [id])
+  roomType       RoomType?     @relation(fields: [roomTypeId], references: [id])
+  features       Feature[]     @relation("RoomFeatures")
+}
 
-  @@unique([slug, hostelId], name: "Room_slug_hostelId_key")
+model RoomType {
+  id          String   @id @default(uuid())
+  name        String   // Español, por ejemplo
+  slug        String   @unique
+  capacity    Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rooms       Room[]
+}
+
+model RoomImage {
+  id       String   @id @default(uuid())
+  url      String
+  order    Int
+  roomId   String
+  room     Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+}
+
+model Feature {
+  id    String  @id @default(uuid())
+  slug  String  @unique
+
+  rooms Room[]  @relation("RoomFeatures")
 }
 
 model DayPrice {
@@ -58,6 +86,7 @@ model DayPrice {
   price     Int
   roomId    String
   active    Boolean  @default(true)
+  availableCapacity Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)

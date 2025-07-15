@@ -2,6 +2,7 @@ import { UserRole } from '@prisma/client';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAdminUserDto } from './dto/create-admin-user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AdminUsersService {
@@ -34,11 +35,13 @@ export class AdminUsersService {
       throw new BadRequestException('Email ya en uso');
     }
 
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
     return this.prisma.user.create({
       data: {
         name: dto.name,
         email: dto.email,
-        password: dto.password, // se asume hash
+        password: hashedPassword, // se asume hash
         role: UserRole.ADMIN,
         hostelId: dto.hostelId,
       },

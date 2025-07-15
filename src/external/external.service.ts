@@ -80,6 +80,11 @@ export class ExternalService {
             OR: [{ startDate: { lt: toDate }, endDate: { gt: fromDate } }],
           },
         },
+        roomType: {
+          select: {
+            capacity: true,
+          },
+        },
       },
     });
 
@@ -100,7 +105,10 @@ export class ExternalService {
         result.push({
           roomId: room.id,
           date: date.toISOString().split('T')[0],
-          availableUnits: Math.max(room.capacity - activeReservations, 0),
+          availableUnits: Math.max(
+            (room.roomType?.capacity ?? 0) - activeReservations,
+            0,
+          ),
         });
       }
     }

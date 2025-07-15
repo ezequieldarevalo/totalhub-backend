@@ -1,16 +1,12 @@
-import { IsOptional, IsString, IsInt, Min } from 'class-validator';
+import { IsOptional, IsString, IsUUID, IsArray } from 'class-validator';
 
 export class UpdateRoomDto {
   @IsOptional()
   @IsString()
-  name?: string;
+  roomTypeId?: string;
 
   @IsOptional()
-  @IsString()
-  slug?: string;
-
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  capacity?: number;
+  @IsArray()
+  @IsUUID('all', { each: true })
+  featureIds?: string[];
 }

@@ -1,9 +1,13 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
 import { UpdateRoomDto } from './dto/update-room.dto';
-import { normalizeSlug } from '../utils/slug.util';
 import { RoomResponseDto } from './dto/room-response.dto';
 
 @Injectable()
@@ -18,23 +22,30 @@ export class RoomsService {
       throw new BadRequestException('Only admins can create rooms');
     }
 
-    const normalizedSlug = normalizeSlug(dto.slug);
-
-    const exists = await this.prisma.room.findFirst({
-      where: {
-        slug: normalizedSlug,
-        hostelId: user.hostelId,
-      },
-    });
-
-    if (exists) throw new BadRequestException('Room slug already in use');
-
     const created = await this.prisma.room.create({
       data: {
-        name: dto.name,
-        slug: normalizedSlug,
-        capacity: dto.capacity,
+        roomTypeId: dto.roomTypeId,
         hostelId: user.hostelId,
+        features: dto.featureIds?.length
+          ? {
+              connect: dto.featureIds.map((id) => ({ id })),
+            }
+          : undefined,
+      },
+      include: {
+        roomType: {
+          select: {
+            name: true,
+            slug: true,
+            capacity: true,
+          },
+        },
+        features: {
+          select: {
+            id: true,
+            slug: true,
+          },
+        },
       },
     });
 
@@ -50,8 +61,19 @@ export class RoomsService {
       where: {
         hostelId: user.hostelId,
       },
+      include: {
+        roomType: true,
+        features: {
+          select: {
+            id: true,
+            slug: true,
+          },
+        },
+      },
       orderBy: {
-        name: 'asc',
+        roomType: {
+          name: 'asc',
+        },
       },
     });
 
@@ -74,27 +96,46 @@ export class RoomsService {
       throw new BadRequestException('Room not found or access denied');
     }
 
-    if (dto.slug) {
-      const normalizedSlug = normalizeSlug(dto.slug);
-
+    // Si querés validar que no haya otro room con mismo roomTypeId (opcional)
+    if (dto.roomTypeId) {
       const exists = await this.prisma.room.findFirst({
         where: {
-          slug: normalizedSlug,
+          roomTypeId: dto.roomTypeId,
           hostelId: user.hostelId,
           NOT: { id },
         },
       });
 
       if (exists) {
-        throw new BadRequestException('Room slug already in use');
+        throw new BadRequestException('Room with that type already exists');
       }
-
-      dto.slug = normalizedSlug;
     }
 
     const updated = await this.prisma.room.update({
       where: { id },
-      data: dto,
+      data: {
+        roomTypeId: dto.roomTypeId ?? undefined,
+        features: dto.featureIds?.length
+          ? {
+              set: dto.featureIds.map((id) => ({ id })),
+            }
+          : undefined,
+      },
+      include: {
+        roomType: {
+          select: {
+            name: true,
+            slug: true,
+            capacity: true,
+          },
+        },
+        features: {
+          select: {
+            id: true,
+            slug: true,
+          },
+        },
+      },
     });
 
     return RoomResponseDto.fromEntity(updated);
@@ -114,8 +155,39 @@ export class RoomsService {
 
     const deleted = await this.prisma.room.delete({
       where: { id },
+      include: {
+        roomType: {
+          select: {
+            name: true,
+            slug: true,
+            capacity: true,
+          },
+        },
+        features: {
+          select: {
+            id: true,
+            slug: true,
+          },
+        },
+      },
     });
 
     return RoomResponseDto.fromEntity(deleted);
+  }
+
+  async getRoomById(id: string, user: JwtPayload) {
+    const room = await this.prisma.room.findUnique({
+      where: { id },
+      include: {
+        features: true,
+        roomType: true,
+      },
+    });
+
+    if (!room) throw new NotFoundException('Habitación no encontrada');
+    if (room.hostelId !== user.hostelId)
+      throw new ForbiddenException('Acceso denegado');
+
+    return room;
   }
 }

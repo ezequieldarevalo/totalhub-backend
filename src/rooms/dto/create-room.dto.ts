@@ -1,15 +1,18 @@
-import { IsNotEmpty, IsString, IsInt, Min } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsUUID,
+  IsOptional,
+  IsArray,
+} from 'class-validator';
 
 export class CreateRoomDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  roomTypeId: string;
 
-  @IsString()
-  @IsNotEmpty()
-  slug: string;
-
-  @IsInt()
-  @Min(1)
-  capacity: number;
+  @IsOptional()
+  @IsArray()
+  @IsUUID('all', { each: true })
+  featureIds?: string[];
 }

@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { PublicService } from './public.service';
 import { PublicCreateReservationDto } from './dto/public-create-reservation.dto';
 
@@ -41,5 +49,30 @@ export class PublicController {
   @Get('reservations/lookup')
   lookupReservation(@Query('email') email: string) {
     return this.publicService.lookupReservationsByEmail(email);
+  }
+
+  @Get('preview/:slug/:roomId')
+  getReservationPreview(
+    @Param('slug') slug: string,
+    @Param('roomId') roomId: string,
+    @Query('from') from: string,
+    @Query('to') to: string,
+    @Query('guests', ParseIntPipe) guests: number,
+    @Query('isResident') isResident?: string,
+    @Query('paymentMethod') paymentMethod?: 'cash' | 'card',
+    @Query('hasMuchiCard') hasMuchiCard?: string,
+    @Query('muchiCardType') muchiCardType?: 'cash' | 'debit' | 'credit', // ✅ lo agregás acá
+  ) {
+    return this.publicService.getReservationPreview({
+      slug,
+      roomId,
+      from,
+      to,
+      guests,
+      isResident: isResident === 'true',
+      paymentMethod: paymentMethod === 'cash' ? 'cash' : 'card',
+      hasMuchiCard: hasMuchiCard === 'true',
+      muchiCardType,
+    });
   }
 }
