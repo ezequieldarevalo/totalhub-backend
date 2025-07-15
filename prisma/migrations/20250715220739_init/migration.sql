@@ -32,16 +32,26 @@ CREATE TABLE "User" (
 -- CreateTable
 CREATE TABLE "Room" (
     "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "slug" TEXT NOT NULL,
-    "capacity" INTEGER NOT NULL,
     "description" TEXT,
     "hostelId" TEXT NOT NULL,
+    "roomTypeId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "externalRoomId" TEXT,
 
     CONSTRAINT "Room_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "RoomType" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "capacity" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "RoomType_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -52,6 +62,14 @@ CREATE TABLE "RoomImage" (
     "roomId" TEXT NOT NULL,
 
     CONSTRAINT "RoomImage_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Feature" (
+    "id" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+
+    CONSTRAINT "Feature_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -149,6 +167,14 @@ CREATE TABLE "ChannelReservationSync" (
     CONSTRAINT "ChannelReservationSync_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "_RoomFeatures" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL,
+
+    CONSTRAINT "_RoomFeatures_AB_pkey" PRIMARY KEY ("A","B")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Hostel_slug_key" ON "Hostel"("slug");
 
@@ -156,10 +182,13 @@ CREATE UNIQUE INDEX "Hostel_slug_key" ON "Hostel"("slug");
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Room_slug_hostelId_key" ON "Room"("slug", "hostelId");
+CREATE UNIQUE INDEX "RoomType_slug_key" ON "RoomType"("slug");
 
 -- CreateIndex
 CREATE INDEX "RoomImage_roomId_idx" ON "RoomImage"("roomId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Feature_slug_key" ON "Feature"("slug");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "DayPrice_date_roomId_key" ON "DayPrice"("date", "roomId");
@@ -173,11 +202,17 @@ CREATE UNIQUE INDEX "Channel_code_key" ON "Channel"("code");
 -- CreateIndex
 CREATE UNIQUE INDEX "ChannelConnection_hostelId_channelId_key" ON "ChannelConnection"("hostelId", "channelId");
 
+-- CreateIndex
+CREATE INDEX "_RoomFeatures_B_index" ON "_RoomFeatures"("B");
+
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_hostelId_fkey" FOREIGN KEY ("hostelId") REFERENCES "Hostel"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Room" ADD CONSTRAINT "Room_hostelId_fkey" FOREIGN KEY ("hostelId") REFERENCES "Hostel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Room" ADD CONSTRAINT "Room_roomTypeId_fkey" FOREIGN KEY ("roomTypeId") REFERENCES "RoomType"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "RoomImage" ADD CONSTRAINT "RoomImage_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -205,3 +240,9 @@ ALTER TABLE "ChannelReservationSync" ADD CONSTRAINT "ChannelReservationSync_conn
 
 -- AddForeignKey
 ALTER TABLE "ChannelReservationSync" ADD CONSTRAINT "ChannelReservationSync_reservationId_fkey" FOREIGN KEY ("reservationId") REFERENCES "Reservation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_RoomFeatures" ADD CONSTRAINT "_RoomFeatures_A_fkey" FOREIGN KEY ("A") REFERENCES "Feature"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_RoomFeatures" ADD CONSTRAINT "_RoomFeatures_B_fkey" FOREIGN KEY ("B") REFERENCES "Room"("id") ON DELETE CASCADE ON UPDATE CASCADE;
