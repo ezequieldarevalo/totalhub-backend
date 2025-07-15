@@ -15,13 +15,9 @@ export class RoomResponseDto {
       name: string;
       slug: string;
       capacity: number;
-    } | null;
+    };
     features?: { id: string; slug: string }[];
   }): RoomResponseDto {
-    if (!room.roomType) {
-      throw new Error('RoomType is missing in the room entity');
-    }
-
     const dto = new RoomResponseDto();
     dto.id = room.id;
     dto.name = room.roomType.name;

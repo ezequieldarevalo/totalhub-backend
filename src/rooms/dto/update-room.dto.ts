@@ -1,9 +1,8 @@
 import { IsOptional, IsString, IsUUID, IsArray } from 'class-validator';
 
 export class UpdateRoomDto {
-  @IsOptional()
   @IsString()
-  roomTypeId?: string;
+  roomTypeId: string;
 
   @IsOptional()
   @IsArray()

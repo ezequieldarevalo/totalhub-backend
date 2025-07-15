@@ -49,9 +49,9 @@ export class PublicService {
       },
       rooms: hostel.rooms.map((room) => ({
         id: room.id,
-        name: room.roomType?.name ?? '—',
-        slug: room.roomType?.slug ?? '',
-        capacity: room.roomType?.capacity ?? 0,
+        name: room.roomType.name,
+        slug: room.roomType.slug,
+        capacity: room.roomType.capacity,
       })),
     };
   }
@@ -96,10 +96,10 @@ export class PublicService {
 
     return {
       id: room.id,
-      name: room.roomType?.name ?? '—',
-      slug: room.roomType?.slug ?? '',
+      name: room.roomType.name,
+      slug: room.roomType.slug,
       description: room.description,
-      capacity: room.roomType?.capacity ?? 0,
+      capacity: room.roomType.capacity,
       hostel: room.hostel,
       photos: room.images.map((img) => img.url),
     };
@@ -180,8 +180,7 @@ export class PublicService {
         );
         if (!price) return false;
 
-        const maxCapacity =
-          price.availableCapacity ?? room.roomType?.capacity ?? 0;
+        const maxCapacity = price.availableCapacity ?? room.roomType.capacity;
 
         const guestsThatDay = reservations
           .filter((r) => r.startDate <= day && r.endDate > day)
@@ -196,9 +195,9 @@ export class PublicService {
 
       result.push({
         id: room.id,
-        name: room.roomType?.name ?? '—',
-        slug: room.roomType?.slug ?? '',
-        capacity: room.roomType?.capacity ?? 0,
+        name: room.roomType.name,
+        slug: room.roomType.slug,
+        capacity: room.roomType.capacity,
         price: totalPrice,
         images: room.images,
         features: room.features,
@@ -273,8 +272,7 @@ export class PublicService {
           day.toISOString().split('T')[0],
       );
 
-      const maxCapacity =
-        price?.availableCapacity ?? room.roomType?.capacity ?? 0;
+      const maxCapacity = price?.availableCapacity ?? room.roomType.capacity;
 
       if (dto.guests > maxCapacity) {
         throw new BadRequestException(
@@ -342,7 +340,7 @@ export class PublicService {
     await this.mailService.sendReservationConfirmation({
       to: dto.email,
       name: dto.name,
-      roomSlug: room?.roomType?.slug as RoomSlug,
+      roomSlug: room.roomType.slug as RoomSlug,
       from: dto.from,
       toDate: dto.to,
       guests: dto.guests,
@@ -391,8 +389,8 @@ export class PublicService {
       from: r.startDate,
       to: r.endDate,
       guests: r.guests,
-      room: r.room.roomType?.name ?? '—',
-      roomSlug: r.room.roomType?.slug ?? '',
+      room: r.room.roomType.name,
+      roomSlug: r.room.roomType.slug,
       hostel: r.room.hostel.name,
       hostelSlug: r.room.hostel.slug,
       createdAt: r.createdAt,
@@ -469,7 +467,7 @@ export class PublicService {
             .filter((r) => r.startDate <= day && r.endDate > day)
             .reduce((sum, r) => sum + r.guests, 0);
 
-          return guestsThatDay + guests <= (room.roomType?.capacity ?? 0);
+          return guestsThatDay + guests <= room.roomType.capacity;
         });
 
         if (isAvailable) {
@@ -478,9 +476,9 @@ export class PublicService {
 
           availableRooms.push({
             id: room.id,
-            name: room.roomType?.name ?? '—',
-            slug: room.roomType?.slug ?? '',
-            capacity: room.roomType?.capacity ?? 0,
+            name: room.roomType.name,
+            slug: room.roomType.slug,
+            capacity: room.roomType.capacity,
             price: totalPrice,
           });
         }
