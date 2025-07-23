@@ -114,31 +114,33 @@ export class MailService {
         }[lang];
 
     const discountNote =
-      !isResident && hasMuchiCard
+      isResident && paymentMethod === 'cash'
         ? {
-            es:
-              muchiCardType === 'cash'
-                ? 'Descuento 15 % MuchiCard (efectivo)'
-                : muchiCardType === 'debit'
-                  ? 'Descuento 10 % MuchiCard (débito)'
-                  : muchiCardType === 'credit'
-                    ? 'Descuento 5 % MuchiCard (crédito)'
-                    : null,
-            en:
-              muchiCardType === 'cash'
-                ? '15% MuchiCard discount (cash)'
-                : muchiCardType === 'debit'
-                  ? '10% MuchiCard discount (debit)'
-                  : muchiCardType === 'credit'
-                    ? '5% MuchiCard discount (credit)'
-                    : null,
+            es: 'Descuento por pagar en efectivo',
+            en: 'Cash payment discount',
           }[lang]
-        : isResident && paymentMethod === 'card'
+        : !isResident && hasMuchiCard
           ? {
-              es: 'Incluye IVA',
-              en: 'Includes VAT',
+              es:
+                muchiCardType === 'cash'
+                  ? 'Descuento 15 % MuchiCard (efectivo)'
+                  : muchiCardType === 'debit'
+                    ? 'Descuento 10 % MuchiCard (débito)'
+                    : muchiCardType === 'credit'
+                      ? 'Descuento 5 % MuchiCard (crédito)'
+                      : null,
+              en:
+                muchiCardType === 'cash'
+                  ? '15% MuchiCard discount (cash)'
+                  : muchiCardType === 'debit'
+                    ? '10% MuchiCard discount (debit)'
+                    : muchiCardType === 'credit'
+                      ? '5% MuchiCard discount (credit)'
+                      : null,
             }[lang]
           : null;
+
+    const shouldShowBaseTotal = !!discountNote && baseTotal !== undefined;
 
     // Enviar mail al huésped
     await this.mailerService.sendMail({
@@ -153,11 +155,13 @@ export class MailService {
         nights,
         guests,
         total: formattedTotal,
-        baseTotal: formattedBaseTotal,
+        baseTotal: shouldShowBaseTotal ? formattedBaseTotal : null,
         discountNote,
         paymentLabel,
       },
     });
+
+    const shouldShowBaseTotalES = !!discountNote && baseTotal !== undefined;
 
     // Enviar copia interna al hostel (siempre en español)
     await this.mailerService.sendMail({
@@ -172,9 +176,11 @@ export class MailService {
         nights,
         guests,
         total: this.formatCurrency(total, 'es'),
-        baseTotal: baseTotal ? this.formatCurrency(baseTotal, 'es') : null,
-        discountNote: lang === 'es' ? discountNote : null, // solo si es español
-        paymentLabel: lang === 'es' ? paymentLabel : null,
+        baseTotal: shouldShowBaseTotalES
+          ? this.formatCurrency(baseTotal, 'es')
+          : null,
+        discountNote,
+        paymentLabel,
       },
     });
   }
