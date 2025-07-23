@@ -63,7 +63,7 @@ export class MailService {
     paymentMethod: 'cash' | 'card';
     hasMuchiCard: boolean;
     muchiCardType?: 'cash' | 'debit' | 'credit';
-    baseTotal?: number; // sin IVA o descuento
+    baseTotal?: number;
   }): Promise<void> {
     const {
       lang,
@@ -84,9 +84,6 @@ export class MailService {
     const formattedFrom = this.formatDateByLang(from, lang);
     const formattedTo = this.formatDateByLang(toDate, lang);
     const formattedTotal = this.formatCurrency(total, lang);
-    const formattedBaseTotal = baseTotal
-      ? this.formatCurrency(baseTotal, lang)
-      : null;
     const nights = this.calculateNights(from, toDate);
 
     const roomName = roomTranslations[lang]?.[roomSlug] ?? roomSlug;
@@ -140,7 +137,13 @@ export class MailService {
             }[lang]
           : null;
 
-    const shouldShowBaseTotal = !!discountNote && baseTotal !== undefined;
+    // Solo mostrar precio tachado si es residente y paga en efectivo
+    const shouldShowBaseTotal =
+      isResident && paymentMethod === 'cash' && baseTotal !== undefined;
+
+    const formattedBaseTotal = shouldShowBaseTotal
+      ? this.formatCurrency(baseTotal, lang)
+      : null;
 
     // Enviar mail al huésped
     await this.mailerService.sendMail({
@@ -155,15 +158,20 @@ export class MailService {
         nights,
         guests,
         total: formattedTotal,
-        baseTotal: shouldShowBaseTotal ? formattedBaseTotal : null,
+        baseTotal: formattedBaseTotal,
         discountNote,
         paymentLabel,
       },
     });
 
-    const shouldShowBaseTotalES = !!discountNote && baseTotal !== undefined;
+    // Para la copia interna, aplicar la misma lógica en español
+    const shouldShowBaseTotalES =
+      isResident && paymentMethod === 'cash' && baseTotal !== undefined;
 
-    // Enviar copia interna al hostel (siempre en español)
+    const formattedBaseTotalES = shouldShowBaseTotalES
+      ? this.formatCurrency(baseTotal, 'es')
+      : null;
+
     await this.mailerService.sendMail({
       to: 'hosteltotalsalta@gmail.com',
       subject: `Copia de reserva confirmada - ${name}`,
@@ -176,9 +184,7 @@ export class MailService {
         nights,
         guests,
         total: this.formatCurrency(total, 'es'),
-        baseTotal: shouldShowBaseTotalES
-          ? this.formatCurrency(baseTotal, 'es')
-          : null,
+        baseTotal: formattedBaseTotalES,
         discountNote,
         paymentLabel,
       },
