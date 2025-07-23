@@ -774,7 +774,12 @@ export class ReservationsService {
     const reservation = await this.prisma.reservation.findUnique({
       where: { id },
       include: {
-        room: { select: { hostelId: true } },
+        room: {
+          select: {
+            id: true,
+            hostelId: true,
+          },
+        },
       },
     });
 
@@ -782,6 +787,28 @@ export class ReservationsService {
       throw new BadRequestException('Reservation not found or access denied');
     }
 
+    // Calcular días de la reserva
+    const days = eachDayOfInterval({
+      start: reservation.startDate,
+      end: addDays(reservation.endDate, -1),
+    });
+
+    // Restaurar cupos
+    for (const day of days) {
+      await this.prisma.dayPrice.updateMany({
+        where: {
+          roomId: reservation.room.id,
+          date: day,
+        },
+        data: {
+          availableCapacity: {
+            increment: reservation.guests,
+          },
+        },
+      });
+    }
+
+    // Cancelar la reserva
     return this.prisma.reservation.update({
       where: { id },
       data: { cancelled: true },
