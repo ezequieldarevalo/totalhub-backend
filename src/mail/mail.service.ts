@@ -143,7 +143,7 @@ export class MailService {
 
     const formattedBaseTotal = shouldShowBaseTotal
       ? this.formatCurrency(
-          isResident && paymentMethod === 'cash' ? total * 1.3 : baseTotal!,
+          isResident && paymentMethod === 'cash' ? total * 1.33 : baseTotal!,
           lang,
         )
       : null;
@@ -173,7 +173,7 @@ export class MailService {
 
     const formattedBaseTotalES = shouldShowBaseTotalES
       ? this.formatCurrency(
-          isResident && paymentMethod === 'cash' ? total * 1.3 : baseTotal!,
+          isResident && paymentMethod === 'cash' ? total * 1.33 : baseTotal!,
           'es',
         )
       : null;
