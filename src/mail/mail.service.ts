@@ -142,7 +142,7 @@ export class MailService {
       isResident && paymentMethod === 'cash' && baseTotal !== undefined;
 
     const formattedBaseTotal = shouldShowBaseTotal
-      ? this.formatCurrency(baseTotal, lang)
+      ? this.formatCurrency(total * 1.3, lang)
       : null;
 
     // Enviar mail al huésped
@@ -169,7 +169,7 @@ export class MailService {
       isResident && paymentMethod === 'cash' && baseTotal !== undefined;
 
     const formattedBaseTotalES = shouldShowBaseTotalES
-      ? this.formatCurrency(baseTotal, 'es')
+      ? this.formatCurrency(total * 1.3, 'es')
       : null;
 
     await this.mailerService.sendMail({
