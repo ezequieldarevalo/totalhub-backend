@@ -137,12 +137,15 @@ export class MailService {
             }[lang]
           : null;
 
-    // Solo mostrar precio tachado si es residente y paga en efectivo
     const shouldShowBaseTotal =
-      isResident && paymentMethod === 'cash' && baseTotal !== undefined;
+      (isResident && paymentMethod === 'cash') ||
+      (!isResident && hasMuchiCard && baseTotal !== undefined);
 
     const formattedBaseTotal = shouldShowBaseTotal
-      ? this.formatCurrency(total * 1.3, lang)
+      ? this.formatCurrency(
+          isResident && paymentMethod === 'cash' ? total * 1.3 : baseTotal!,
+          lang,
+        )
       : null;
 
     // Enviar mail al huésped
@@ -164,12 +167,15 @@ export class MailService {
       },
     });
 
-    // Para la copia interna, aplicar la misma lógica en español
     const shouldShowBaseTotalES =
-      isResident && paymentMethod === 'cash' && baseTotal !== undefined;
+      (isResident && paymentMethod === 'cash') ||
+      (!isResident && hasMuchiCard && baseTotal !== undefined);
 
     const formattedBaseTotalES = shouldShowBaseTotalES
-      ? this.formatCurrency(total * 1.3, 'es')
+      ? this.formatCurrency(
+          isResident && paymentMethod === 'cash' ? total * 1.3 : baseTotal!,
+          'es',
+        )
       : null;
 
     await this.mailerService.sendMail({
