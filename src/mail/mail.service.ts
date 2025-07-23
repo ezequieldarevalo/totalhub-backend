@@ -144,7 +144,7 @@ export class MailService {
     await this.mailerService.sendMail({
       to,
       subject,
-      template: `reservations/confirmation.${lang}`,
+      template: `reservations/confirmation.${lang}.hbs`,
       context: {
         name,
         room: roomName,
@@ -163,7 +163,7 @@ export class MailService {
     await this.mailerService.sendMail({
       to: 'hosteltotalsalta@gmail.com',
       subject: `Copia de reserva confirmada - ${name}`,
-      template: `reservations/confirmation.es`,
+      template: `reservations/confirmation.es.hbs`,
       context: {
         name,
         room: roomNameES,
