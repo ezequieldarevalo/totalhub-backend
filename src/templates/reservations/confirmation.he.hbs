@@ -1,0 +1,52 @@
+<div dir="rtl"
+  style="font-family: Arial, sans-serif; text-align: right; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
+  <img src="https://yourdomain.com/images/hostel-header.jpg" alt="Total Hostel"
+    style="width: 100%; border-radius: 8px 8px 0 0;" />
+
+  <h2 style="color: #333;">שלום {{name}}!</h2>
+  <p style="font-size: 16px;">ההזמנה שלך אושרה:</p>
+
+  <table style="width: 100%; font-size: 16px; margin-top: 16px;">
+    <tr>
+      <td><strong>חדר:</strong></td>
+      <td>{{room}}</td>
+    </tr>
+    <tr>
+      <td><strong>מתאריך:</strong></td>
+      <td>{{from}}</td>
+    </tr>
+    <tr>
+      <td><strong>עד תאריך:</strong></td>
+      <td>{{to}}</td>
+    </tr>
+    <tr>
+      <td><strong>מספר לילות:</strong></td>
+      <td>{{nights}}</td>
+    </tr>
+    <tr>
+      <td><strong>אורחים:</strong></td>
+      <td>{{guests}}</td>
+    </tr>
+    <tr>
+      <td><strong>אמצעי תשלום:</strong></td>
+      <td>{{paymentLabel}}</td>
+    </tr>
+    {{#if discountNote}}
+    <tr>
+      <td><strong>הנחה:</strong></td>
+      <td>{{discountNote}}</td>
+    </tr>
+    {{/if}}
+    <tr>
+      <td><strong>סך הכל לתשלום:</strong></td>
+      <td>
+        {{#if baseTotal}}
+        <span style="text-decoration: line-through; color: #999;">{{baseTotal}}</span><br />
+        {{/if}}
+        <strong style="font-size: 18px;">{{total}}</strong>
+      </td>
+    </tr>
+  </table>
+
+  <p style="margin-top: 24px;">תודה שבחרת ב־Total Hostel 🏨✨</p>
+</div>

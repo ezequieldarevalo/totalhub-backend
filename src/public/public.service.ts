@@ -287,27 +287,27 @@ export class PublicService {
       );
     }
 
-    // PRECIO BASE
-    let baseTotal = prices.reduce((acc, p) => acc + p.price, 0) * dto.guests;
+    // PRECIO BASE (sin IVA ni descuento)
+    const baseTotal = prices.reduce((acc, p) => acc + p.price, 0) * dto.guests;
+    let finalTotal = baseTotal;
 
-    // Turista con MuchiCard
+    // Descuento MuchiCard (solo para no residentes)
     if (!dto.isResident && dto.hasMuchiCard) {
       if (dto.muchiCardType === 'cash') {
-        baseTotal *= 0.85;
+        finalTotal *= 0.85;
       } else if (dto.muchiCardType === 'debit') {
-        baseTotal *= 0.9;
+        finalTotal *= 0.9;
       } else if (dto.muchiCardType === 'credit') {
-        baseTotal *= 0.95;
+        finalTotal *= 0.95;
       }
     }
 
-    // Residente con tarjeta (IVA)
+    // Recargo IVA si es residente con tarjeta
     if (dto.isResident && dto.paymentMethod === PaymentMethod.CARD) {
-      baseTotal *= 1.3333;
+      finalTotal *= 1.3333;
     }
 
-    // Redondeo a dos decimales
-    const total = parseFloat(baseTotal.toFixed(2));
+    const total = parseFloat(finalTotal.toFixed(2));
 
     const reservation = await this.prisma.reservation.create({
       data: {
@@ -336,7 +336,7 @@ export class PublicService {
       });
     }
 
-    // Enviar mail
+    // Enviar mail con detalle completo
     await this.mailService.sendReservationConfirmation({
       to: dto.email,
       name: dto.name,
@@ -346,6 +346,11 @@ export class PublicService {
       guests: dto.guests,
       total,
       lang: dto.lang as Lang,
+      isResident: dto.isResident,
+      paymentMethod: dto.paymentMethod,
+      hasMuchiCard: dto.hasMuchiCard ?? false,
+      muchiCardType: dto.muchiCardType,
+      baseTotal: parseFloat(baseTotal.toFixed(2)),
     });
 
     return {

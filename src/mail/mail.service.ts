@@ -59,142 +59,123 @@ export class MailService {
     guests: number;
     total: number;
     lang: Lang;
+    isResident: boolean;
+    paymentMethod: 'cash' | 'card';
+    hasMuchiCard: boolean;
+    muchiCardType?: 'cash' | 'debit' | 'credit';
+    baseTotal?: number; // sin IVA o descuento
   }): Promise<void> {
-    const lang = options.lang;
+    const {
+      lang,
+      name,
+      roomSlug,
+      from,
+      toDate,
+      guests,
+      total,
+      to,
+      isResident,
+      paymentMethod,
+      hasMuchiCard,
+      muchiCardType,
+      baseTotal,
+    } = options;
 
-    const translatedRoomName =
-      roomTranslations[lang]?.[options.roomSlug] ?? options.roomSlug;
+    const formattedFrom = this.formatDateByLang(from, lang);
+    const formattedTo = this.formatDateByLang(toDate, lang);
+    const formattedTotal = this.formatCurrency(total, lang);
+    const formattedBaseTotal = baseTotal
+      ? this.formatCurrency(baseTotal, lang)
+      : null;
+    const nights = this.calculateNights(from, toDate);
 
-    const roomNameES =
-      roomTranslations.es[options.roomSlug] ?? options.roomSlug;
+    const roomName = roomTranslations[lang]?.[roomSlug] ?? roomSlug;
+    const roomNameES = roomTranslations.es[roomSlug] ?? roomSlug;
 
-    const subjects = {
+    const subject = {
       es: 'Confirmación de reserva en Total Hostel',
       en: 'Reservation Confirmation at Total Hostel',
-    };
+    }[lang];
 
-    const greetings = {
-      es: `¡Hola ${options.name}!`,
-      en: `Hello ${options.name}!`,
-    };
+    const paymentLabel = isResident
+      ? {
+          es:
+            paymentMethod === 'cash'
+              ? 'Residente - Efectivo'
+              : 'Residente - Tarjeta/Transferencia',
+          en:
+            paymentMethod === 'cash'
+              ? 'Resident - Cash'
+              : 'Resident - Card/Transfer',
+        }[lang]
+      : {
+          es: 'Extranjero',
+          en: 'Foreigner',
+        }[lang];
 
-    const intro = {
-      es: 'Tu reserva fue confirmada:',
-      en: 'Your reservation has been confirmed:',
-    };
+    const discountNote =
+      !isResident && hasMuchiCard
+        ? {
+            es:
+              muchiCardType === 'cash'
+                ? 'Descuento 15 % MuchiCard (efectivo)'
+                : muchiCardType === 'debit'
+                  ? 'Descuento 10 % MuchiCard (débito)'
+                  : muchiCardType === 'credit'
+                    ? 'Descuento 5 % MuchiCard (crédito)'
+                    : null,
+            en:
+              muchiCardType === 'cash'
+                ? '15% MuchiCard discount (cash)'
+                : muchiCardType === 'debit'
+                  ? '10% MuchiCard discount (debit)'
+                  : muchiCardType === 'credit'
+                    ? '5% MuchiCard discount (credit)'
+                    : null,
+          }[lang]
+        : isResident && paymentMethod === 'card'
+          ? {
+              es: 'Incluye IVA',
+              en: 'Includes VAT',
+            }[lang]
+          : null;
 
-    const fieldLabels = {
-      es: {
-        room: 'Habitación',
-        from: 'Desde',
-        to: 'Hasta',
-        nights: 'Noches',
-        guests: 'Huéspedes',
-        total: 'Total',
-        thanks: 'Gracias por elegir Total Hostel 🏨✨',
-      },
-      en: {
-        room: 'Room',
-        from: 'From',
-        to: 'To',
-        nights: 'Nights',
-        guests: 'Guests',
-        total: 'Total',
-        thanks: 'Thank you for choosing Total Hostel 🏨✨',
-      },
-    };
-
-    const formattedFrom = this.formatDateByLang(options.from, lang);
-    const formattedTo = this.formatDateByLang(options.toDate, lang);
-    const formattedTotal = this.formatCurrency(options.total, lang);
-    const nights = this.calculateNights(options.from, options.toDate);
-
-    const guestHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
-        <img src="https://yourdomain.com/images/hostel-header.jpg" alt="Total Hostel" style="width: 100%; border-radius: 8px 8px 0 0;" />
-
-        <h2 style="color: #333;">${greetings[lang]}</h2>
-        <p style="font-size: 16px;">${intro[lang]}</p>
-
-        <table style="width: 100%; font-size: 16px; margin-top: 16px;">
-          <tr>
-            <td><strong>${fieldLabels[lang].room}:</strong></td>
-            <td>${translatedRoomName}</td>
-          </tr>
-          <tr>
-            <td><strong>${fieldLabels[lang].from}:</strong></td>
-            <td>${formattedFrom}</td>
-          </tr>
-          <tr>
-            <td><strong>${fieldLabels[lang].to}:</strong></td>
-            <td>${formattedTo}</td>
-          </tr>
-          <tr>
-            <td><strong>${fieldLabels[lang].nights}:</strong></td>
-            <td>${nights}</td>
-          </tr>
-          <tr>
-            <td><strong>${fieldLabels[lang].guests}:</strong></td>
-            <td>${options.guests}</td>
-          </tr>
-          <tr>
-            <td><strong>${fieldLabels[lang].total}:</strong></td>
-            <td>${formattedTotal}</td>
-          </tr>
-        </table>
-
-        <p style="margin-top: 24px;">${fieldLabels[lang].thanks}</p>
-      </div>
-    `;
-
-    const hostelHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
-        <img src="https://yourdomain.com/images/hostel-header.jpg" alt="Total Hostel" style="width: 100%; border-radius: 8px 8px 0 0;" />
-
-        <h2 style="color: #333;">¡Hola ${options.name}!</h2>
-        <p style="font-size: 16px;">Tu reserva fue confirmada:</p>
-
-        <table style="width: 100%; font-size: 16px; margin-top: 16px;">
-          <tr>
-            <td><strong>Habitación:</strong></td>
-            <td>${roomNameES}</td>
-          </tr>
-          <tr>
-            <td><strong>Desde:</strong></td>
-            <td>${this.formatDateByLang(options.from, 'es')}</td>
-          </tr>
-          <tr>
-            <td><strong>Hasta:</strong></td>
-            <td>${this.formatDateByLang(options.toDate, 'es')}</td>
-          </tr>
-          <tr>
-            <td><strong>Noches:</strong></td>
-            <td>${nights}</td>
-          </tr>
-          <tr>
-            <td><strong>Huéspedes:</strong></td>
-            <td>${options.guests}</td>
-          </tr>
-          <tr>
-            <td><strong>Total:</strong></td>
-            <td>${this.formatCurrency(options.total, 'es')}</td>
-          </tr>
-        </table>
-
-        <p style="margin-top: 24px;">Gracias por elegir Total Hostel 🏨✨</p>
-      </div>
-    `;
-
+    // Enviar mail al huésped
     await this.mailerService.sendMail({
-      to: options.to,
-      subject: subjects[lang],
-      html: guestHtml,
+      to,
+      subject,
+      template: `reservations/confirmation.${lang}`,
+      context: {
+        name,
+        room: roomName,
+        from: formattedFrom,
+        to: formattedTo,
+        nights,
+        guests,
+        total: formattedTotal,
+        baseTotal: formattedBaseTotal,
+        discountNote,
+        paymentLabel,
+      },
     });
 
+    // Enviar copia interna al hostel (siempre en español)
     await this.mailerService.sendMail({
       to: 'hosteltotalsalta@gmail.com',
-      subject: `Copia de reserva confirmada - ${options.name}`,
-      html: hostelHtml,
+      subject: `Copia de reserva confirmada - ${name}`,
+      template: `reservations/confirmation.es`,
+      context: {
+        name,
+        room: roomNameES,
+        from: this.formatDateByLang(from, 'es'),
+        to: this.formatDateByLang(toDate, 'es'),
+        nights,
+        guests,
+        total: this.formatCurrency(total, 'es'),
+        baseTotal: baseTotal ? this.formatCurrency(baseTotal, 'es') : null,
+        discountNote: lang === 'es' ? discountNote : null, // solo si es español
+        paymentLabel: lang === 'es' ? paymentLabel : null,
+      },
     });
   }
 }
