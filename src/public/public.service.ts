@@ -105,7 +105,12 @@ export class PublicService {
     };
   }
 
-  async getAvailabilityBySlug(slug: string, from: string, to: string) {
+  async getAvailabilityBySlug(
+    slug: string,
+    from: string,
+    to: string,
+    guests: number,
+  ) {
     const hostel = await this.prisma.hostel.findUnique({
       where: { slug },
       include: {
@@ -186,7 +191,7 @@ export class PublicService {
           .filter((r) => r.startDate <= day && r.endDate > day)
           .reduce((sum, r) => sum + r.guests, 0);
 
-        return guestsThatDay < maxCapacity;
+        return guestsThatDay + guests <= maxCapacity;
       });
 
       if (!isAvailableAllDays) continue;

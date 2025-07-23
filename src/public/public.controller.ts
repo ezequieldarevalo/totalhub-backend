@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -34,8 +35,19 @@ export class PublicController {
     @Param('slug') slug: string,
     @Query('from') from: string,
     @Query('to') to: string,
+    @Query('guests') guests: string,
   ) {
-    return this.publicService.getAvailabilityBySlug(slug, from, to);
+    const guestsNumber = parseInt(guests, 10);
+    if (isNaN(guestsNumber) || guestsNumber <= 0) {
+      throw new BadRequestException('Invalid number of guests');
+    }
+
+    return this.publicService.getAvailabilityBySlug(
+      slug,
+      from,
+      to,
+      guestsNumber,
+    );
   }
 
   @Post(':slug/reservations')
