@@ -20,7 +20,12 @@ import { join } from 'path';
       },
       template: {
         dir: join(__dirname, '..', 'templates'),
-        adapter: new HandlebarsAdapter(),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        adapter: new HandlebarsAdapter(undefined, {
+          extName: '.hbs',
+          layoutsDir: undefined,
+          partialsDir: undefined,
+        } as any),
         options: {
           strict: true,
         },
